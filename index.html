@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="icon" type="image/x-icon" href="svg/file-earmark-zip-fill.svg">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+
+    <!-- Custom CSS -->
+    <style>
+        html,
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            color: #E5E5E5;
+            background-color: #1A1A1A;
+            background-position: center;
+            overflow-y: visible !important;
+            overflow-x: hidden;
+        }
+        a {
+            display:none;
+        }
+    </style>
+
+    <script src="js/jquery-3.6.2.min.js" type="text/javascript"></script>
+    <script src="js/jquery.filereader.js" type="text/javascript"></script>
+    <script src="js/forge.min.js" type="text/javascript"></script>
+    <script src="js/aescrypt-ww.js" type="text/javascript"></script>
+    <title>JS Aes File Encryption</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1>JS Aes File Encryption Tool</h1>
+
+        <div class="row g-2">
+            <div class="col-md">
+                <label for="inputKey" class="form-label">Key</label>
+                <input type="text" class="form-control" id="inputKey" placeholder="Key Here">
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row g-2">
+            <div class="col-md">
+                <label for="fileEncrypt" class="form-label">Encrypt A File</label>
+                <input type="file" class="form-control" id="fileEncrypt" name="fileEncrypt[]">
+            </div>
+            <div class="col-md">
+                <label for="fileDecrypt" class="form-label">Decrypt A File</label>
+                <input type="file" class="form-control" id="fileDecrypt" name="fileDecrypt[]" placeholder>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row g-2">
+            <div class="col-md">
+                <label for="fileLogs" class="form-label">File Logs</label>
+                <div class="col-md" id="fileLog"></div>
+            </div>
+            <div class="col-md">
+                <label for="fileLinks" class="form-label">File Links</label>
+                <a id="a3" download="demo.aes"></a>
+                <a id="a4" download="demo-decrypted.tar"></a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+            $("#fileDecrypt").fileread(function (opts) {
+                var aesworker = new AesWorker();
+                var input = opts.fileData.data;
+                var inputKey = $("#inputKey").val();
+                console.log(input);
+                aesworker.decrypt(input, inputKey, function (e, dec) {
+                    var du = makeurl(dec.data);
+                    if (dec.error != "") $("#fileLog").append("Error: " + dec.error + "<br>");
+                    else {
+                        $("#a4").attr('href', du).attr('download', opts.fileData.file.name.replace(/\.aes$/, ''));
+                        $("#a4").text(opts.fileData.file.name.replace(/\.aes$/, '')).show();
+                        $("#fileLog").append("Decrypted.<br>");
+                    }
+                });
+            }).click(function (e) {
+                var inputKey = $("#inputKey").val();
+                if (inputKey == "") {
+                    alert("The key is null or empty!");
+                    $("#inputKey").focus();
+                    return false;
+                }
+            });
+
+            $("#fileEncrypt").fileread(function (opts) {
+                $("#fileLog").append("Encrypting.<br>");
+                var inputKey = $("#inputKey").val();
+                var ret = [];
+
+                var input = opts.fileData.data;
+                var loop = 0;
+
+                var aesworker = new AesWorker();
+
+                aesworker.encrypt(input, inputKey, function (e, enc) {
+                    var du = makeurl(enc.data);
+                    if (enc.error != "") $("#fileLog").append("Error: " + enc.error + "<br>");
+                    else {
+                        $("#a3").attr('href', du).attr('download', opts.fileData.file.name + '.aes');
+                        $("#a3").text(opts.fileData.file.name + '.aes').show();
+                        $("#fileLog").append("Encrypted.<br>");
+                    }
+                });
+
+                $("#fileEncrypt").replaceWith($("#fileEncrypt").val('').clone(true));
+            }).click(function (e) {
+                var inputKey = $("#inputKey").val();
+                if (inputKey == "") {
+                    alert("The key is null or empty!");
+                    $("#inputKey").focus();
+                    return false;
+                }
+            });
+        });
+    </script>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"
+        integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
+        integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
+        crossorigin="anonymous"></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+    -->
+</body>
+
+</html>
