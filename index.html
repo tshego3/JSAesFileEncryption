@@ -30,9 +30,7 @@
     </style>
 
     <script src="js/jquery-3.6.2.min.js" type="text/javascript"></script>
-    <script src="js/jquery.filereader.js" type="text/javascript"></script>
-    <script src="js/forge.min.js" type="text/javascript"></script>
-    <script src="js/aescrypt-ww.js" type="text/javascript"></script>
+    <script src="js/crypto-js-4.1.1/crypto-js.js" type="text/javascript"></script>
     <title>JS Aes File Encryption</title>
 </head>
 
@@ -59,77 +57,104 @@
                 <input type="file" class="form-control" id="fileDecrypt" name="fileDecrypt[]" placeholder>
             </div>
         </div>
-
-        <br />
-
-        <div class="row g-2">
-            <div class="col-md">
-                <label for="fileLogs" class="form-label">File Logs</label>
-                <div class="col-md" id="fileLog"></div>
-            </div>
-            <div class="col-md">
-                <label for="fileLinks" class="form-label">File Links</label>
-                <a id="a3" download="demo.aes"></a>
-                <a id="a4" download="demo-decrypted.tar"></a>
-            </div>
-        </div>
     </div>
 
     <script>
-        $(function () {
-            $("#fileDecrypt").fileread(function (opts) {
-                var aesworker = new AesWorker();
-                var input = opts.fileData.data;
-                var inputKey = $("#inputKey").val();
-                console.log(input);
-                aesworker.decrypt(input, inputKey, function (e, dec) {
-                    var du = makeurl(dec.data);
-                    if (dec.error != "") $("#fileLog").append("Error: " + dec.error + "<br>");
-                    else {
-                        $("#a4").attr('href', du).attr('download', opts.fileData.file.name.replace(/\.aes$/, ''));
-                        $("#a4").text(opts.fileData.file.name.replace(/\.aes$/, '')).show();
-                        $("#fileLog").append("Decrypted.<br>");
-                    }
-                });
-            }).click(function (e) {
-                var inputKey = $("#inputKey").val();
+        function encryptStringToBase64(encryptString) {
+            var textString = encryptString;
+            var words = CryptoJS.enc.Utf8.parse(textString);
+            var base64 = CryptoJS.enc.Base64.stringify(words);
+            return base64;
+        }
+
+        function encryptString(encryptString, secretKey, secretIV) {
+            var keyBytes = CryptoJS.PBKDF2(secretKey, secretIV, { keySize: 48 / 4, iterations: 1000 });
+            var key = new CryptoJS.lib.WordArray.init(keyBytes.words, 32);
+            var iv = new CryptoJS.lib.WordArray.init(keyBytes.words.splice(32 / 4), 16);
+            var encrypted = CryptoJS.AES.encrypt(encryptString, key, { iv: iv, });
+            return encrypted;
+        }
+        
+        function decryptString(encryptedString, secretKey, secretIV) {
+            var keyBytes = CryptoJS.PBKDF2(secretKey, secretIV, { keySize: 48 / 4, iterations: 1000 });
+            var key = new CryptoJS.lib.WordArray.init(keyBytes.words, 32);
+            var iv = new CryptoJS.lib.WordArray.init(keyBytes.words.splice(32 / 4), 16);
+            var decrypted = CryptoJS.AES.decrypt(encryptedString, key, { iv: iv, });
+            return decrypted;
+        }
+
+        function downloadFileFromBase64(filename, base64string) {
+            var link = document.createElement('a');
+            link.download = filename;
+            link.href = "data:application/octet-stream;base64," + base64string;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        const fileDecrypt = document.getElementById("fileDecrypt");
+        fileDecrypt.addEventListener("change", () => {
+            try {
+                var inputFile = fileDecrypt.files[0];
+                var inputKey = document.getElementById("inputKey").value;
+
                 if (inputKey == "") {
                     alert("The key is null or empty!");
-                    $("#inputKey").focus();
-                    return false;
+                    document.getElementById("inputKey").focus();
                 }
-            });
+                else {
+                    var inputIV = encryptStringToBase64(inputKey);
 
-            $("#fileEncrypt").fileread(function (opts) {
-                $("#fileLog").append("Encrypting.<br>");
-                var inputKey = $("#inputKey").val();
-                var ret = [];
+                    let reader = new FileReader();
+                    reader.readAsDataURL(inputFile);
+                    
+                    reader.onload = function() {
+                        downloadFileFromBase64(inputFile.name.replace(".aes", ""), decryptString(reader.result.split(",")[1].toString(), inputKey, inputIV).toString(CryptoJS.enc.Utf8).split(",")[1].toString());
+                    };
 
-                var input = opts.fileData.data;
-                var loop = 0;
+                    reader.onerror = function() {
+                        console.error(reader.error);
+                    };
+                }
+            }
+            catch (error) {
+                console.error(error);
+            }
+        },
+        false
+        );
 
-                var aesworker = new AesWorker();
+        const fileEncrypt = document.getElementById("fileEncrypt");
+        fileEncrypt.addEventListener("change", () => {
+            try {
+                var inputFile = fileEncrypt.files[0];
+                var inputKey = document.getElementById("inputKey").value;
 
-                aesworker.encrypt(input, inputKey, function (e, enc) {
-                    var du = makeurl(enc.data);
-                    if (enc.error != "") $("#fileLog").append("Error: " + enc.error + "<br>");
-                    else {
-                        $("#a3").attr('href', du).attr('download', opts.fileData.file.name + '.aes');
-                        $("#a3").text(opts.fileData.file.name + '.aes').show();
-                        $("#fileLog").append("Encrypted.<br>");
-                    }
-                });
-
-                $("#fileEncrypt").replaceWith($("#fileEncrypt").val('').clone(true));
-            }).click(function (e) {
-                var inputKey = $("#inputKey").val();
                 if (inputKey == "") {
                     alert("The key is null or empty!");
-                    $("#inputKey").focus();
-                    return false;
+                    document.getElementById("inputKey").focus();
                 }
-            });
-        });
+                else {
+                    var inputIV = encryptStringToBase64(inputKey);
+
+                    let reader = new FileReader();
+                    reader.readAsDataURL(inputFile);
+
+                    reader.onload = function() {
+                        downloadFileFromBase64(inputFile.name + '.aes', encryptString(reader.result.toString(), inputKey, inputIV).toString());
+                    };
+
+                    reader.onerror = function() {
+                        console.error(reader.error);
+                    };
+                }
+            }
+            catch (error) {
+                console.error(error);
+            }
+        },
+        false
+        );
     </script>
 
     <!-- Optional JavaScript; choose one of the two! -->
