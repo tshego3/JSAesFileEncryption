@@ -5,5 +5,5 @@ JS Aes File Encryption Tool
 https://tshego3.github.io/JSAesFileEncryption/
 
 # Documentation
-https://cryptojs.gitbook.io/docs/
-https://github.com/Dead4W/jsAesCrypt
+* https://cryptojs.gitbook.io/docs/
+* https://github.com/Dead4W/jsAesCrypt
