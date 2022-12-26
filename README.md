@@ -1,4 +1,4 @@
-# JS Aes File Encryption Tool
+# JS AES File Encryption Tool
 
 ## Live Website
 https://tshego3.github.io/JSAesFileEncryption/
