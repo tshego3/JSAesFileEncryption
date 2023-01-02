@@ -29,7 +29,6 @@ var aesCrypt;
 ! function()
 {
 	let e = {
-			//version: "0.15",
 			bufferSize: 32768,
 			fileFormatVersion: 2,
 			maxPassLen: 1024,
@@ -80,8 +79,8 @@ var aesCrypt;
 			{
 				let o = new t.BinaryStream;
 				o.appendBytes("AES"), o.appendBytes(e.fileFormatVersion), o.appendBytes(0);
-				//const p = "jsAesCrypt " + e.version;
-				//o.appendBytes(0), o.appendBytes(1 + ("CREATED_BY" + p).length), o.appendBytes("CREATED_BY"), o.appendBytes(0), o.appendBytes(p), o.appendBytes([0, 128]), o.appendBytes("\0".repeat(128)), o.appendBytes([0, 0]), o.appendBytes(r), o.appendBytes(n), o.appendBytes(s);
+				const p = "";
+				o.appendBytes(0), o.appendBytes(1 + ("" + p).length), o.appendBytes(""), o.appendBytes(0), o.appendBytes(p), o.appendBytes([0, 128]), o.appendBytes("\0".repeat(128)), o.appendBytes([0, 0]), o.appendBytes(r), o.appendBytes(n), o.appendBytes(s);
 				let l = new t.FileBytesReader(a),
 					w = l.getLength(),
 					c = new t.BinaryStream(await l.readBytes(l.getLength())),
